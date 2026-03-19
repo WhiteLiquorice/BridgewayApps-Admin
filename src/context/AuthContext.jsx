@@ -51,6 +51,29 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Idle auto-logout: sign out after the role-specific inactivity timeout.
+  // Runs only when session + org + profile are all loaded.
+  // Set timeout to 0 in Admin → Org Setup to disable for a role.
+  useEffect(() => {
+    if (!session || !org || !profile) return
+    const mins = ({
+      staff:   org.session_timeout_staff_min   ?? 30,
+      manager: org.session_timeout_manager_min ?? 240,
+      admin:   org.session_timeout_admin_min   ?? 480,
+      patient: org.session_timeout_patient_min ?? 480,
+    })[profile.role] ?? 480
+    if (mins === 0) return
+    const ms = mins * 60 * 1000
+    let timer
+    const reset = () => { clearTimeout(timer); timer = setTimeout(() => supabase.auth.signOut(), ms) }
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll']
+    events.forEach(e => document.addEventListener(e, reset, true))
+    reset()
+    return () => { clearTimeout(timer); events.forEach(e => document.removeEventListener(e, reset, true)) }
+  }, [session?.user?.id, profile?.role,
+      org?.session_timeout_staff_min, org?.session_timeout_manager_min,
+      org?.session_timeout_admin_min, org?.session_timeout_patient_min])
+
   return (
     <AuthContext.Provider value={{
       session,

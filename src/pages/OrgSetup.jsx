@@ -13,6 +13,12 @@ export default function OrgSetup() {
   const [primaryColor, setPrimaryColor] = useState('#f59e0b')
   const [logoUrl,      setLogoUrl]      = useState('')
 
+  // Session timeout fields (minutes per role)
+  const [timeoutAdmin,   setTimeoutAdmin]   = useState(480)
+  const [timeoutManager, setTimeoutManager] = useState(240)
+  const [timeoutStaff,   setTimeoutStaff]   = useState(30)
+  const [timeoutPatient, setTimeoutPatient] = useState(480)
+
   const [saving,        setSaving]        = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [success,       setSuccess]       = useState(false)
@@ -30,6 +36,10 @@ export default function OrgSetup() {
       setWebsite(org.website || '')
       setPrimaryColor(org.primary_color || '#f59e0b')
       setLogoUrl(org.logo_url || '')
+      setTimeoutAdmin(org.session_timeout_admin_min ?? 480)
+      setTimeoutManager(org.session_timeout_manager_min ?? 240)
+      setTimeoutStaff(org.session_timeout_staff_min ?? 30)
+      setTimeoutPatient(org.session_timeout_patient_min ?? 480)
     }
   }, [org])
 
@@ -66,7 +76,13 @@ export default function OrgSetup() {
     try {
       const { error: err } = await supabase
         .from('orgs')
-        .update({ name, address, phone, website, primary_color: primaryColor })
+        .update({
+          name, address, phone, website, primary_color: primaryColor,
+          session_timeout_admin_min:   Number(timeoutAdmin),
+          session_timeout_manager_min: Number(timeoutManager),
+          session_timeout_staff_min:   Number(timeoutStaff),
+          session_timeout_patient_min: Number(timeoutPatient),
+        })
         .eq('id', org.id)
       if (err) {
         setError(err.message)
@@ -208,6 +224,34 @@ export default function OrgSetup() {
                 This color applies to accent elements in the Dashboard and Client Portal.
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Session Timeouts card */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-white mb-1">Session Timeouts</h2>
+          <p className="text-xs text-gray-500 mb-4">
+            Automatically sign out inactive users after this many minutes. Set to 0 to disable.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Admin',   value: timeoutAdmin,   set: setTimeoutAdmin },
+              { label: 'Manager', value: timeoutManager, set: setTimeoutManager },
+              { label: 'Staff',   value: timeoutStaff,   set: setTimeoutStaff },
+              { label: 'Patient', value: timeoutPatient, set: setTimeoutPatient },
+            ].map(({ label, value, set }) => (
+              <div key={label}>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">{label}</label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number" min={0} max={1440} value={value}
+                    onChange={e => set(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  />
+                  <span className="text-xs text-gray-500 whitespace-nowrap">min</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

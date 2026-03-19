@@ -9,12 +9,12 @@ function Toggle({ enabled, onChange, disabled = false }) {
       type="button"
       onClick={() => !disabled && onChange(!enabled)}
       disabled={disabled}
-      className={`relative w-10 h-6 rounded-full transition-colors focus:outline-none ${
-        disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-      } ${enabled ? 'bg-amber-500' : 'bg-gray-700'}`}
+      className={`relative inline-flex h-6 w-10 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none
+        ${disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
+        ${enabled ? 'bg-amber-500' : 'bg-gray-700'}`}
     >
-      <span
-        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-1'}`}
+      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+        ${enabled ? 'translate-x-5' : 'translate-x-1'}`}
       />
     </button>
   )

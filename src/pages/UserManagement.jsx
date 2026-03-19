@@ -23,10 +23,11 @@ function Toggle({ enabled, onChange }) {
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative w-10 h-6 rounded-full transition-colors focus:outline-none ${enabled ? 'bg-amber-500' : 'bg-gray-700'}`}
+      className={`relative inline-flex h-6 w-10 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none cursor-pointer
+        ${enabled ? 'bg-amber-500' : 'bg-gray-700'}`}
     >
-      <span
-        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-1'}`}
+      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+        ${enabled ? 'translate-x-5' : 'translate-x-1'}`}
       />
     </button>
   )
