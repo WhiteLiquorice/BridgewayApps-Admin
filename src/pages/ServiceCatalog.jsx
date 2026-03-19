@@ -37,14 +37,19 @@ export default function ServiceCatalog() {
     if (!profile?.org_id) return
     setLoading(true)
     setError(null)
-    const { data, error: err } = await supabase
-      .from('services')
-      .select('*')
-      .eq('org_id', profile.org_id)
-      .order('name')
-    setLoading(false)
-    if (err) { setError(err.message); return }
-    setServices(data || [])
+    try {
+      const { data, error: err } = await supabase
+        .from('services')
+        .select('*')
+        .eq('org_id', profile.org_id)
+        .order('name')
+      if (err) { setError(err.message); return }
+      setServices(data || [])
+    } catch {
+      setError('Failed to load services — check your connection.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { loadServices() }, [profile?.org_id])

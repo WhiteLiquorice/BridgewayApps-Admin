@@ -32,14 +32,19 @@ export default function Billing() {
     async function loadStaffCount() {
       if (!profile?.org_id) return
       setLoading(true)
-      const { count, error: err } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('org_id', profile.org_id)
-        .in('role', ['admin', 'manager', 'staff'])
-      setLoading(false)
-      if (err) { setError(err.message); return }
-      setStaffCount(count ?? 0)
+      try {
+        const { count, error: err } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', profile.org_id)
+          .in('role', ['admin', 'manager', 'staff'])
+        if (err) { setError(err.message); return }
+        setStaffCount(count ?? 0)
+      } catch {
+        setError('Failed to load billing data — check your connection.')
+      } finally {
+        setLoading(false)
+      }
     }
     loadStaffCount()
   }, [profile?.org_id])

@@ -11,39 +11,55 @@ export function AuthProvider({ children }) {
 
   async function loadProfile(userId) {
     if (!userId) { setProfile(null); setOrg(null); return }
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle()
-    setProfile(prof ?? null)
-    if (prof?.org_id) {
-      const { data: orgData } = await supabase
-        .from('orgs')
-        .select('*')
-        .eq('id', prof.org_id)
-        .maybeSingle()
-      setOrg(orgData ?? null)
-    } else {
-      setOrg(null)
+    try {
+      const { data: prof } = await supabase
+        .from('profiles').select('*').eq('user_id', userId).maybeSingle()
+      setProfile(prof ?? null)
+      if (prof?.org_id) {
+        const { data: orgData } = await supabase
+          .from('orgs').select('*').eq('id', prof.org_id).maybeSingle()
+        setOrg(orgData ?? null)
+      } else {
+        setOrg(null)
+      }
+    } catch {
+      // Network error — leave any existing profile/org in place
     }
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Read local session immediately (localStorage, no network) → unblock UI
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      await loadProfile(session?.user?.id ?? null)
+      setLoading(false)
+      loadProfile(session?.user?.id ?? null)
+    }).catch(() => {
       setLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_e, session) => {
-      setSession(session)
-      await loadProfile(session?.user?.id ?? null)
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setSession(null); setProfile(null); setOrg(null)
+      } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        setSession(session)
+        loadProfile(session?.user?.id ?? null)
+      }
+      // TOKEN_REFRESHED: ignored — Supabase rotates the token internally
+      // INITIAL_SESSION: ignored — getSession() already handled it
     })
+
     return () => subscription.unsubscribe()
   }, [])
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, org, role: profile?.role ?? null, loading }}>
+    <AuthContext.Provider value={{
+      session,
+      user: session?.user ?? null,
+      profile,
+      org,
+      role: profile?.role ?? null,
+      loading,
+    }}>
       {children}
     </AuthContext.Provider>
   )

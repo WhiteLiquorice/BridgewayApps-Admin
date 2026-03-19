@@ -65,7 +65,7 @@ export default function Sidebar() {
   const navigate = useNavigate()
 
   async function handleSignOut() {
-    await supabase.auth.signOut()
+    try { await supabase.auth.signOut() } catch { /* onAuthStateChange fires SIGNED_OUT locally regardless */ }
     navigate('/login')
   }
 

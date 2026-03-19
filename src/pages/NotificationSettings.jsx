@@ -52,25 +52,30 @@ export default function NotificationSettings() {
     async function loadSettings() {
       if (!profile?.org_id) return
       setLoading(true)
-      const { data, error: err } = await supabase
-        .from('notification_settings')
-        .select('*')
-        .eq('org_id', profile.org_id)
-        .maybeSingle()
-      setLoading(false)
-      if (err) { setError(err.message); return }
-      if (data) {
-        setSettings({
-          sms_enabled:   data.sms_enabled   ?? false,
-          email_enabled: data.email_enabled ?? false,
-          remind_24h:    data.remind_24h    ?? true,
-          remind_2h:     data.remind_2h     ?? false,
-        })
-        setRowExists(true)
-      } else {
-        // Use defaults — row will be created on first save
-        setSettings(DEFAULTS)
-        setRowExists(false)
+      try {
+        const { data, error: err } = await supabase
+          .from('notification_settings')
+          .select('*')
+          .eq('org_id', profile.org_id)
+          .maybeSingle()
+        if (err) { setError(err.message); return }
+        if (data) {
+          setSettings({
+            sms_enabled:   data.sms_enabled   ?? false,
+            email_enabled: data.email_enabled ?? false,
+            remind_24h:    data.remind_24h    ?? true,
+            remind_2h:     data.remind_2h     ?? false,
+          })
+          setRowExists(true)
+        } else {
+          // Use defaults — row will be created on first save
+          setSettings(DEFAULTS)
+          setRowExists(false)
+        }
+      } catch {
+        setError('Failed to load notification settings — check your connection.')
+      } finally {
+        setLoading(false)
       }
     }
     loadSettings()

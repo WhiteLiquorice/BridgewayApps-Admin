@@ -38,31 +38,23 @@ export default function OrgSetup() {
     if (!file || !org?.id) return
     setLogoError(null)
     setUploadingLogo(true)
+    try {
+      const path = `${org.id}/logo`
+      const { error: uploadErr } = await supabase.storage
+        .from('org-assets')
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (uploadErr) { setLogoError(uploadErr.message); return }
 
-    const path = `${org.id}/logo`
-    const { error: uploadErr } = await supabase.storage
-      .from('org-assets')
-      .upload(path, file, { upsert: true, contentType: file.type })
-
-    if (uploadErr) {
-      setLogoError(uploadErr.message)
+      // Get public URL and persist to orgs table
+      const { data: { publicUrl } } = supabase.storage.from('org-assets').getPublicUrl(path)
+      const { error: updateErr } = await supabase
+        .from('orgs').update({ logo_url: publicUrl }).eq('id', org.id)
+      if (updateErr) { setLogoError(updateErr.message) } else { setLogoUrl(publicUrl) }
+    } catch {
+      setLogoError('Upload failed — check your connection and try again.')
+    } finally {
       setUploadingLogo(false)
-      return
     }
-
-    // Get public URL and persist to orgs table
-    const { data: { publicUrl } } = supabase.storage.from('org-assets').getPublicUrl(path)
-    const { error: updateErr } = await supabase
-      .from('orgs')
-      .update({ logo_url: publicUrl })
-      .eq('id', org.id)
-
-    if (updateErr) {
-      setLogoError(updateErr.message)
-    } else {
-      setLogoUrl(publicUrl)
-    }
-    setUploadingLogo(false)
   }
 
   async function handleSave(e) {
@@ -71,19 +63,22 @@ export default function OrgSetup() {
     setSaving(true)
     setError(null)
     setSuccess(false)
-
-    const { error: err } = await supabase
-      .from('orgs')
-      .update({ name, address, phone, website, primary_color: primaryColor })
-      .eq('id', org.id)
-
-    setSaving(false)
-    if (err) {
-      setError(err.message)
-    } else {
-      setSuccess(true)
-      // Reload to refresh org data in AuthContext
-      setTimeout(() => window.location.reload(), 800)
+    try {
+      const { error: err } = await supabase
+        .from('orgs')
+        .update({ name, address, phone, website, primary_color: primaryColor })
+        .eq('id', org.id)
+      if (err) {
+        setError(err.message)
+      } else {
+        setSuccess(true)
+        // Reload to refresh org data in AuthContext
+        setTimeout(() => window.location.reload(), 800)
+      }
+    } catch {
+      setError('Failed to save — check your connection and try again.')
+    } finally {
+      setSaving(false)
     }
   }
 

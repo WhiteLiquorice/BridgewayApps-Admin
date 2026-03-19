@@ -13,10 +13,14 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (err) { setError(err.message); return }
-    navigate('/')
+    try {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+      if (err) { setError(err.message) } else { navigate('/') }
+    } catch {
+      setError('Unable to sign in — check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

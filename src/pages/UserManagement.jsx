@@ -55,14 +55,19 @@ export default function UserManagement() {
     if (!profile?.org_id) return
     setLoading(true)
     setError(null)
-    const { data, error: err } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('org_id', profile.org_id)
-      .order('full_name')
-    setLoading(false)
-    if (err) { setError(err.message); return }
-    setUsers(data || [])
+    try {
+      const { data, error: err } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('org_id', profile.org_id)
+        .order('full_name')
+      if (err) { setError(err.message); return }
+      setUsers(data || [])
+    } catch {
+      setError('Failed to load users — check your connection.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { loadUsers() }, [profile?.org_id])
