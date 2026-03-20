@@ -15,9 +15,8 @@ export default function OrgSetup() {
 
   // Session timeout fields (minutes per role)
   const [timeoutAdmin,   setTimeoutAdmin]   = useState(480)
-  const [timeoutManager, setTimeoutManager] = useState(240)
+  const [timeoutManager, setTimeoutManager] = useState(480)
   const [timeoutStaff,   setTimeoutStaff]   = useState(30)
-  const [timeoutPatient, setTimeoutPatient] = useState(480)
 
   const [saving,        setSaving]        = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
@@ -37,9 +36,8 @@ export default function OrgSetup() {
       setPrimaryColor(org.primary_color || '#f59e0b')
       setLogoUrl(org.logo_url || '')
       setTimeoutAdmin(org.session_timeout_admin_min ?? 480)
-      setTimeoutManager(org.session_timeout_manager_min ?? 240)
+      setTimeoutManager(org.session_timeout_manager_min ?? 480)
       setTimeoutStaff(org.session_timeout_staff_min ?? 30)
-      setTimeoutPatient(org.session_timeout_patient_min ?? 480)
     }
   }, [org])
 
@@ -81,7 +79,6 @@ export default function OrgSetup() {
           session_timeout_admin_min:   Number(timeoutAdmin),
           session_timeout_manager_min: Number(timeoutManager),
           session_timeout_staff_min:   Number(timeoutStaff),
-          session_timeout_patient_min: Number(timeoutPatient),
         })
         .eq('id', org.id)
       if (err) {
@@ -233,12 +230,11 @@ export default function OrgSetup() {
           <p className="text-xs text-gray-500 mb-4">
             Automatically sign out inactive users after this many minutes. Set to 0 to disable.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { label: 'Admin',   value: timeoutAdmin,   set: setTimeoutAdmin },
               { label: 'Manager', value: timeoutManager, set: setTimeoutManager },
               { label: 'Staff',   value: timeoutStaff,   set: setTimeoutStaff },
-              { label: 'Patient', value: timeoutPatient, set: setTimeoutPatient },
             ].map(({ label, value, set }) => (
               <div key={label}>
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">{label}</label>
