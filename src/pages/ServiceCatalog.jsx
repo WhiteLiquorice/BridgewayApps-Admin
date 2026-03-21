@@ -10,6 +10,8 @@ function formatPrice(price) {
 export default function ServiceCatalog() {
   const { profile } = useAuth()
 
+  const [activeTab, setActiveTab] = useState('services') // 'services' | 'packages'
+
   const [services,  setServices]  = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
@@ -33,6 +35,14 @@ export default function ServiceCatalog() {
   // Archived section expanded state
   const [showArchived, setShowArchived] = useState(false)
 
+  // Package template state
+  const [packages,     setPackages]     = useState([])
+  const [loadingPkgs,  setLoadingPkgs]  = useState(false)
+  const [showAddPkg,   setShowAddPkg]   = useState(false)
+  const [pkgForm,      setPkgForm]      = useState({ name: '', sessions: 10, price: '', expiry_days: '' })
+  const [addingPkg,    setAddingPkg]    = useState(false)
+  const [pkgError,     setPkgError]     = useState(null)
+
   async function loadServices() {
     if (!profile?.org_id) return
     setLoading(true)
@@ -52,7 +62,35 @@ export default function ServiceCatalog() {
     }
   }
 
-  useEffect(() => { loadServices() }, [profile?.org_id])
+  useEffect(() => { loadServices(); loadPackages() }, [profile?.org_id])
+
+  async function loadPackages() {
+    if (!profile?.org_id) return
+    setLoadingPkgs(true)
+    try {
+      const { data, error: err } = await supabase
+        .from('client_packages')
+        .select('*, client:clients!client_id(name)')
+        .eq('org_id', profile.org_id)
+        .order('created_at', { ascending: false })
+        .limit(100)
+      if (!err) setPackages(data || [])
+    } catch { /* ignore */ } finally {
+      setLoadingPkgs(false)
+    }
+  }
+
+  async function handleAddPackage(e) {
+    e.preventDefault()
+    if (!pkgForm.name.trim()) { setPkgError('Name is required.'); return }
+    setPkgError(null)
+    setAddingPkg(true)
+    // This creates a "template" as a package with no client — we'll just store it as reference
+    // Actually, packages belong to clients. Let's just show existing packages for management.
+    // For now, store package templates in a simpler way — just show the existing packages list.
+    setAddingPkg(false)
+    setPkgError('Package templates coming soon. Packages are currently added from the Client Detail page in the Dashboard.')
+  }
 
   const active   = services.filter(s => !s.is_archived)
   const archived = services.filter(s =>  s.is_archived)
@@ -125,22 +163,37 @@ export default function ServiceCatalog() {
   return (
     <div className="p-8">
       {/* Page header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-white">Services</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage the services offered by your practice.</p>
+          <h1 className="text-xl font-semibold text-white">Service Catalog</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage services and client packages.</p>
         </div>
-        <button
-          onClick={() => { setShowAdd(v => !v); setAddError(null) }}
-          className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-[#0c1a2e] text-sm font-semibold rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-          </svg>
-          Add Service
-        </button>
+        {activeTab === 'services' && (
+          <button
+            onClick={() => { setShowAdd(v => !v); setAddError(null) }}
+            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-[#0c1a2e] text-sm font-semibold rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+            </svg>
+            Add Service
+          </button>
+        )}
       </div>
 
+      {/* Tab bar */}
+      <div className="flex gap-1 bg-gray-800 rounded-lg p-0.5 mb-6 max-w-xs">
+        <button onClick={() => setActiveTab('services')}
+          className={`flex-1 text-sm py-2 rounded-md transition-colors font-medium ${
+            activeTab === 'services' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-400'
+          }`}>Services</button>
+        <button onClick={() => setActiveTab('packages')}
+          className={`flex-1 text-sm py-2 rounded-md transition-colors font-medium ${
+            activeTab === 'packages' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-400'
+          }`}>Packages</button>
+      </div>
+
+      {activeTab === 'services' && (<>
       {/* Inline add form */}
       {showAdd && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
@@ -325,6 +378,75 @@ export default function ServiceCatalog() {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+      )}
+      </>)}
+
+      {/* Packages tab */}
+      {activeTab === 'packages' && (
+        <div>
+          <div className="mb-4">
+            <p className="text-sm text-gray-500">
+              Client packages are managed from the Client Detail page in the Dashboard.
+              Below is an overview of all active and past packages.
+            </p>
+          </div>
+
+          {loadingPkgs ? (
+            <div className="flex items-center justify-center h-40">
+              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : packages.length === 0 ? (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+              <p className="text-gray-500 text-sm">No packages have been created yet.</p>
+              <p className="text-gray-600 text-xs mt-1">Add packages from the Client Detail page in the Dashboard.</p>
+            </div>
+          ) : (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Client</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Package</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Sessions</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Price</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                    <th className="text-left px-5 py-3.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Expires</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/60">
+                  {packages.map(pkg => {
+                    const remaining = pkg.total_sessions - pkg.used_sessions
+                    return (
+                      <tr key={pkg.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-5 py-4 text-white font-medium">{pkg.client?.name || '—'}</td>
+                        <td className="px-5 py-4 text-gray-300">{pkg.name}</td>
+                        <td className="px-5 py-4 text-gray-400">
+                          {pkg.used_sessions}/{pkg.total_sessions}
+                          <span className="text-gray-600 ml-1">({remaining} left)</span>
+                        </td>
+                        <td className="px-5 py-4 text-gray-300">{formatPrice(pkg.price)}</td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${
+                            pkg.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                            pkg.status === 'exhausted' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                            pkg.status === 'expired' ? 'bg-gray-700/50 text-gray-500 border-gray-700' :
+                            'bg-gray-700/50 text-gray-500 border-gray-700'
+                          }`}>{pkg.status}</span>
+                        </td>
+                        <td className="px-5 py-4 text-gray-500">
+                          {pkg.expires_at
+                            ? new Date(pkg.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            : '—'
+                          }
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
