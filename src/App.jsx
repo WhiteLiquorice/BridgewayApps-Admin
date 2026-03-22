@@ -10,6 +10,7 @@ import Billing from './pages/Billing'
 import ServiceCatalog from './pages/ServiceCatalog'
 import NotificationSettings from './pages/NotificationSettings'
 import ActivityLog from './pages/ActivityLog'
+import Memberships from './pages/Memberships'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
               <Route path="/users"         element={<UserManagement />} />
               <Route path="/billing"       element={<Billing />} />
               <Route path="/services"      element={<ServiceCatalog />} />
+              <Route path="/memberships"   element={<Memberships />} />
               <Route path="/notifications" element={<NotificationSettings />} />
               <Route path="/activity"      element={<ActivityLog />} />
             </Route>

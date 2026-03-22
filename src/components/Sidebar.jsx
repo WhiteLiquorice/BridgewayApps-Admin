@@ -66,12 +66,21 @@ function ActivityIcon() {
   )
 }
 
+function PackageIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  )
+}
+
 const nav = [
   { to: '/home',          label: 'Home',           icon: HomeIcon },
   { to: '/org-setup',     label: 'Org Setup',     icon: BuildingIcon },
   { to: '/users',         label: 'Users',          icon: UsersIcon },
   { to: '/billing',       label: 'Billing',        icon: CreditCardIcon },
   { to: '/services',      label: 'Services',       icon: TagIcon },
+  { to: '/memberships',   label: 'Memberships',    icon: PackageIcon },
   { to: '/notifications', label: 'Notifications',  icon: BellIcon },
   { to: '/activity',      label: 'Activity Log',   icon: ActivityIcon },
 ]

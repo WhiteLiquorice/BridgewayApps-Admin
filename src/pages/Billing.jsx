@@ -18,7 +18,7 @@ function Toggle({ enabled, onChange }) {
 }
 
 export default function Billing() {
-  const { profile } = useAuth()
+  const { profile, org } = useAuth()
 
   // Add-on UI toggles — not persisted yet (Stripe integration is Phase 5)
   const [portalAddon,  setPortalAddon]  = useState(false)
@@ -28,26 +28,60 @@ export default function Billing() {
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
 
+  // Stripe keys
+  const [stripePk,    setStripePk]    = useState('')
+  const [stripeSk,    setStripeSk]    = useState('')
+  const [paymentReq,  setPaymentReq]  = useState(false)
+  const [stripeSaving, setStripeSaving] = useState(false)
+  const [stripeSuccess, setStripeSuccess] = useState(false)
+
   useEffect(() => {
-    async function loadStaffCount() {
+    async function loadData() {
       if (!profile?.org_id) return
       setLoading(true)
       try {
-        const { count, error: err } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .eq('org_id', profile.org_id)
-          .in('role', ['admin', 'manager', 'staff'])
-        if (err) { setError(err.message); return }
-        setStaffCount(count ?? 0)
+        const [staffRes, orgRes, settingsRes] = await Promise.all([
+          supabase.from('profiles').select('id', { count: 'exact', head: true })
+            .eq('org_id', profile.org_id).in('role', ['admin', 'manager', 'staff']),
+          supabase.from('orgs').select('stripe_publishable_key').eq('id', profile.org_id).single(),
+          supabase.from('org_settings').select('stripe_secret_key, payment_required')
+            .eq('org_id', profile.org_id).maybeSingle(),
+        ])
+        if (staffRes.error) { setError(staffRes.error.message); return }
+        setStaffCount(staffRes.count ?? 0)
+        if (orgRes.data?.stripe_publishable_key) setStripePk(orgRes.data.stripe_publishable_key)
+        if (settingsRes.data) {
+          if (settingsRes.data.stripe_secret_key) setStripeSk(settingsRes.data.stripe_secret_key)
+          setPaymentReq(settingsRes.data.payment_required ?? false)
+        }
       } catch {
         setError('Failed to load billing data — check your connection.')
       } finally {
         setLoading(false)
       }
     }
-    loadStaffCount()
+    loadData()
   }, [profile?.org_id])
+
+  async function saveStripeKeys(e) {
+    e.preventDefault()
+    setStripeSaving(true)
+    setStripeSuccess(false)
+    try {
+      // Save publishable key to orgs table
+      await supabase.from('orgs').update({ stripe_publishable_key: stripePk.trim() || null })
+        .eq('id', profile.org_id)
+      // Upsert secret key + payment_required to org_settings
+      await supabase.from('org_settings').upsert({
+        org_id: profile.org_id,
+        stripe_secret_key: stripeSk.trim() || null,
+        payment_required: paymentReq,
+      }, { onConflict: 'org_id' })
+      setStripeSuccess(true)
+      setTimeout(() => setStripeSuccess(false), 3000)
+    } catch { /* ignore */ }
+    finally { setStripeSaving(false) }
+  }
 
   const overage     = Math.max(0, staffCount - 10)
   const overageCost = overage * 10
@@ -164,9 +198,44 @@ export default function Billing() {
         )}
       </div>
 
+      {/* Stripe Connect card */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <h2 className="text-sm font-semibold text-white mb-1">Connect Stripe</h2>
+        <p className="text-xs text-gray-500 mb-4">Collect payments from clients at booking time.</p>
+        <form onSubmit={saveStripeKeys} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Publishable Key</label>
+            <input type="text" value={stripePk} onChange={e => setStripePk(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+              placeholder="pk_live_..." />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Secret Key</label>
+            <input type="password" value={stripeSk} onChange={e => setStripeSk(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+              placeholder="sk_live_..." />
+            <p className="text-xs text-gray-600 mt-1">Stored securely in org_settings. Never exposed to the frontend.</p>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t border-gray-800/60">
+            <div>
+              <p className="text-sm font-medium text-white">Require payment at booking</p>
+              <p className="text-xs text-gray-500 mt-0.5">If enabled, clients must pay when booking. If disabled, payment is collected at visit.</p>
+            </div>
+            <Toggle enabled={paymentReq} onChange={setPaymentReq} />
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="submit" disabled={stripeSaving}
+              className="px-5 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-[#0c1a2e] text-sm font-semibold rounded-lg transition-colors">
+              {stripeSaving ? 'Saving...' : 'Save Stripe Settings'}
+            </button>
+            {stripeSuccess && <span className="text-green-400 text-sm">Saved.</span>}
+          </div>
+        </form>
+      </div>
+
       {/* Footer note */}
       <p className="text-xs text-gray-600 text-center">
-        Billing is managed via Stripe. Full integration coming in Phase 5.
+        Billing is managed via Stripe. Payment intent creation requires the Supabase Edge Function.
       </p>
     </div>
   )
