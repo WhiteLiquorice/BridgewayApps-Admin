@@ -34,12 +34,12 @@ function PreviewCard({ title, message }) {
 const DEFAULTS = {
   sms_enabled:   false,
   email_enabled: false,
-  remind_24h:    true,
-  remind_2h:     false,
+  reminder_24h:  true,
+  reminder_2h:   false,
 }
 
 export default function NotificationSettings() {
-  const { profile } = useAuth()
+  const { profile, org } = useAuth()
 
   const [settings,  setSettings]  = useState(DEFAULTS)
   const [rowExists, setRowExists] = useState(false)
@@ -47,6 +47,14 @@ export default function NotificationSettings() {
   const [saving,    setSaving]    = useState(false)
   const [error,     setError]     = useState(null)
   const [success,   setSuccess]   = useState(false)
+
+  // Patient check-in toggle — stored in orgs table (patients can read orgs via RLS)
+  const [checkinEnabled, setCheckinEnabled] = useState(true)
+  const [checkinSaving,  setCheckinSaving]  = useState(false)
+
+  useEffect(() => {
+    if (org) setCheckinEnabled(org.patient_checkin_enabled ?? true)
+  }, [org?.id])
 
   useEffect(() => {
     async function loadSettings() {
@@ -63,8 +71,8 @@ export default function NotificationSettings() {
           setSettings({
             sms_enabled:   data.sms_enabled   ?? false,
             email_enabled: data.email_enabled ?? false,
-            remind_24h:    data.remind_24h    ?? true,
-            remind_2h:     data.remind_2h     ?? false,
+            reminder_24h:  data.reminder_24h  ?? true,
+            reminder_2h:   data.reminder_2h   ?? false,
           })
           setRowExists(true)
         } else {
@@ -83,6 +91,19 @@ export default function NotificationSettings() {
 
   function toggle(key) {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  async function toggleCheckin() {
+    const next = !checkinEnabled
+    setCheckinEnabled(next)
+    setCheckinSaving(true)
+    try {
+      await supabase.from('orgs').update({ patient_checkin_enabled: next }).eq('id', profile.org_id)
+    } catch {
+      setCheckinEnabled(!next) // revert on error
+    } finally {
+      setCheckinSaving(false)
+    }
   }
 
   async function handleSave(e) {
@@ -172,8 +193,8 @@ export default function NotificationSettings() {
                 <p className="text-xs text-gray-500 mt-0.5">SMS + email · Sent the day before the appointment</p>
               </div>
               <Toggle
-                enabled={settings.remind_24h}
-                onChange={() => toggle('remind_24h')}
+                enabled={settings.reminder_24h}
+                onChange={() => toggle('reminder_24h')}
                 disabled={!anyChannelOn}
               />
             </div>
@@ -186,8 +207,8 @@ export default function NotificationSettings() {
                 <p className="text-xs text-gray-500 mt-0.5">Sent 2 hours before the appointment via SMS</p>
               </div>
               <Toggle
-                enabled={settings.remind_2h}
-                onChange={() => toggle('remind_2h')}
+                enabled={settings.reminder_2h}
+                onChange={() => toggle('reminder_2h')}
                 // 2h reminder is only meaningful when SMS is enabled
                 disabled={!settings.sms_enabled}
               />
@@ -234,6 +255,25 @@ export default function NotificationSettings() {
           {saving ? 'Saving…' : 'Save Settings'}
         </button>
       </form>
+
+      {/* Patient Check-in — stored in orgs table */}
+      <div className="mt-5 bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <h2 className="text-sm font-semibold text-white mb-1">Patient Check-in</h2>
+        <p className="text-xs text-gray-500 mb-4">Allow patients to check themselves in from the client portal when they arrive.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-white">Enable self check-in</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Shows an "I'm Here" button in the portal 60 minutes before an appointment
+            </p>
+          </div>
+          <Toggle
+            enabled={checkinEnabled}
+            onChange={toggleCheckin}
+            disabled={checkinSaving}
+          />
+        </div>
+      </div>
 
       {/* Integration note */}
       <p className="mt-8 text-xs text-gray-600 text-center">
