@@ -1,3 +1,60 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Layout Theme CSS Variables ───────────────────────────────────────── */
+/* Applied via data-layout-theme attribute on the layout root div.        */
+/* Each theme defines surface styles consumed by the Surface component    */
+/* and individual layout shells.                                          */
+
+/* Modern (default) — sidebar nav, card-based, rounded */
+[data-layout-theme="modern"] {
+  --lt-bg: #0c1a2e;
+  --lt-sidebar: #080f1d;
+  --lt-surface-bg: rgb(17 24 39);
+  --lt-surface-border: rgb(31 41 55);
+  --lt-surface-radius: 0.75rem;
+  --lt-spacing: 1.5rem;
+  --lt-text-primary: rgb(255 255 255);
+  --lt-text-secondary: rgb(156 163 175);
+  --lt-text-muted: rgb(107 114 128);
+}
+
+/* Executive — top nav, dense, professional */
+[data-layout-theme="executive"] {
+  --lt-bg: #0f1724;
+  --lt-sidebar: #0a1628;
+  --lt-surface-bg: rgb(17 24 39);
+  --lt-surface-border: rgb(55 65 81);
+  --lt-surface-radius: 0.25rem;
+  --lt-spacing: 1rem;
+  --lt-text-primary: rgb(243 244 246);
+  --lt-text-secondary: rgb(156 163 175);
+  --lt-text-muted: rgb(107 114 128);
+}
+
+/* Minimal — slim nav, airy, no card borders */
+[data-layout-theme="minimal"] {
+  --lt-bg: #0e1825;
+  --lt-sidebar: #080f1d;
+  --lt-surface-bg: transparent;
+  --lt-surface-border: transparent;
+  --lt-surface-radius: 0;
+  --lt-spacing: 2rem;
+  --lt-text-primary: rgb(229 231 235);
+  --lt-text-secondary: rgb(156 163 175);
+  --lt-text-muted: rgb(107 114 128);
+}
+
+/* Classic — tab nav, structured grid, enterprise */
+[data-layout-theme="classic"] {
+  --lt-bg: #111827;
+  --lt-sidebar: #0d1520;
+  --lt-surface-bg: rgb(17 24 39);
+  --lt-surface-border: rgb(55 65 81);
+  --lt-surface-radius: 0.375rem;
+  --lt-spacing: 1rem;
+  --lt-text-primary: rgb(243 244 246);
+  --lt-text-secondary: rgb(156 163 175);
+  --lt-text-muted: rgb(107 114 128);
+}

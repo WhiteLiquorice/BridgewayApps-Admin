@@ -1,13 +1,18 @@
-import { Outlet } from 'react-router-dom'
-import Sidebar from './Sidebar'
+import { useLayoutTheme } from '../context/LayoutThemeContext'
+import ModernLayout from './layouts/ModernLayout'
+import ExecutiveLayout from './layouts/ExecutiveLayout'
+import MinimalLayout from './layouts/MinimalLayout'
+import ClassicLayout from './layouts/ClassicLayout'
+
+const LAYOUTS = {
+  modern: ModernLayout,
+  executive: ExecutiveLayout,
+  minimal: MinimalLayout,
+  classic: ClassicLayout,
+}
 
 export default function Layout() {
-  return (
-    <div className="flex min-h-screen bg-[#0c1a2e]">
-      <Sidebar />
-      <main className="flex-1 min-w-0 overflow-auto">
-        <Outlet />
-      </main>
-    </div>
-  )
+  const { layoutTheme } = useLayoutTheme()
+  const LayoutComponent = LAYOUTS[layoutTheme] || ModernLayout
+  return <LayoutComponent />
 }

@@ -12,6 +12,7 @@ export default function OrgSetup() {
   const [website,      setWebsite]      = useState('')
   const [primaryColor, setPrimaryColor] = useState('#f59e0b')
   const [logoUrl,      setLogoUrl]      = useState('')
+  const [layoutTheme,  setLayoutTheme]  = useState('modern')
 
   // Session timeout fields (minutes per role)
   const [timeoutAdmin,   setTimeoutAdmin]   = useState(480)
@@ -35,6 +36,7 @@ export default function OrgSetup() {
       setWebsite(org.website || '')
       setPrimaryColor(org.primary_color || '#f59e0b')
       setLogoUrl(org.logo_url || '')
+      setLayoutTheme(org.layout_theme || 'modern')
       setTimeoutAdmin(org.session_timeout_admin_min ?? 480)
       setTimeoutManager(org.session_timeout_manager_min ?? 480)
       setTimeoutStaff(org.session_timeout_staff_min ?? 30)
@@ -76,6 +78,7 @@ export default function OrgSetup() {
         .from('orgs')
         .update({
           name, address, phone, website, primary_color: primaryColor,
+          layout_theme: layoutTheme,
           session_timeout_admin_min:   Number(timeoutAdmin),
           session_timeout_manager_min: Number(timeoutManager),
           session_timeout_staff_min:   Number(timeoutStaff),
@@ -221,6 +224,112 @@ export default function OrgSetup() {
                 This color applies to accent elements in the Dashboard and Client Portal.
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Layout Theme card */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-white mb-1">Layout Theme</h2>
+          <p className="text-xs text-gray-500 mb-4">
+            Choose a layout style for the Dashboard and Client Portal. This applies to everyone in your organization.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                id: 'modern',
+                label: 'Modern',
+                desc: 'Sidebar nav, card-based layout, colorful accents',
+                preview: (
+                  <div className="flex gap-1 h-14 w-full">
+                    <div className="w-5 bg-gray-700 rounded-sm" />
+                    <div className="flex-1 flex flex-col gap-1">
+                      <div className="h-2 bg-gray-700/40 rounded-sm" />
+                      <div className="flex-1 grid grid-cols-2 gap-1">
+                        <div className="bg-gray-700/30 rounded-sm" />
+                        <div className="bg-gray-700/30 rounded-sm" />
+                        <div className="bg-gray-700/30 rounded-sm" />
+                        <div className="bg-gray-700/30 rounded-sm" />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                id: 'executive',
+                label: 'Executive',
+                desc: 'Top nav bar, table-focused, dense professional layout',
+                preview: (
+                  <div className="flex flex-col gap-1 h-14 w-full">
+                    <div className="h-2.5 bg-gray-700 rounded-sm" />
+                    <div className="flex-1 flex flex-col gap-0.5 px-1">
+                      <div className="h-1.5 bg-gray-700/40 rounded-sm" />
+                      <div className="h-1.5 bg-gray-700/25 rounded-sm" />
+                      <div className="h-1.5 bg-gray-700/40 rounded-sm" />
+                      <div className="h-1.5 bg-gray-700/25 rounded-sm" />
+                      <div className="h-1.5 bg-gray-700/40 rounded-sm" />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                id: 'minimal',
+                label: 'Minimal',
+                desc: 'Ultra-clean, maximum whitespace, slim navigation',
+                preview: (
+                  <div className="flex gap-1 h-14 w-full">
+                    <div className="w-2.5 bg-gray-700/60 rounded-sm" />
+                    <div className="flex-1 flex flex-col gap-2 py-1 px-1">
+                      <div className="h-1 bg-gray-700/30 rounded-sm w-2/3" />
+                      <div className="h-px bg-gray-700/20" />
+                      <div className="h-1 bg-gray-700/30 rounded-sm w-1/2" />
+                      <div className="h-px bg-gray-700/20" />
+                      <div className="h-1 bg-gray-700/30 rounded-sm w-3/4" />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                id: 'classic',
+                label: 'Classic',
+                desc: 'Tab-based nav, high density, structured enterprise layout',
+                preview: (
+                  <div className="flex gap-1 h-14 w-full">
+                    <div className="w-4 bg-gray-700/80 rounded-sm flex flex-col gap-0.5 p-0.5">
+                      <div className="h-1 bg-gray-600 rounded-sm" />
+                      <div className="h-1 bg-gray-600/50 rounded-sm" />
+                      <div className="h-1 bg-gray-600/50 rounded-sm" />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-0.5">
+                      <div className="flex gap-0.5">
+                        <div className="h-2 flex-1 bg-gray-700/50 rounded-sm" />
+                        <div className="h-2 flex-1 bg-gray-700/30 rounded-sm" />
+                        <div className="h-2 flex-1 bg-gray-700/30 rounded-sm" />
+                      </div>
+                      <div className="flex-1 bg-gray-700/20 rounded-sm" />
+                    </div>
+                  </div>
+                ),
+              },
+            ].map(({ id, label, desc, preview }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setLayoutTheme(id)}
+                className={`text-left p-3 rounded-lg border-2 transition-all ${
+                  layoutTheme === id
+                    ? 'border-amber-500 bg-amber-500/5'
+                    : 'border-gray-700 hover:border-gray-600 bg-gray-800/50'
+                }`}
+              >
+                <div className="bg-gray-800 rounded p-2 mb-2.5">
+                  {preview}
+                </div>
+                <p className={`text-sm font-medium mb-0.5 ${layoutTheme === id ? 'text-amber-400' : 'text-white'}`}>
+                  {label}
+                </p>
+                <p className="text-[11px] text-gray-500 leading-tight">{desc}</p>
+              </button>
+            ))}
           </div>
         </div>
 

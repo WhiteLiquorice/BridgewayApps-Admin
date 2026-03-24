@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { LayoutThemeProvider } from './context/LayoutThemeContext'
 import AdminRoute from './components/AdminRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -16,25 +17,27 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+        <LayoutThemeProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route element={<AdminRoute />}>
-            <Route element={<Layout />}>
-              <Route index element={<Navigate to="/home" replace />} />
-              <Route path="/home"          element={<Home />} />
-              <Route path="/org-setup"     element={<OrgSetup />} />
-              <Route path="/users"         element={<UserManagement />} />
-              <Route path="/billing"       element={<Billing />} />
-              <Route path="/services"      element={<ServiceCatalog />} />
-              <Route path="/memberships"   element={<Memberships />} />
-              <Route path="/notifications" element={<NotificationSettings />} />
-              <Route path="/activity"      element={<ActivityLog />} />
+            <Route element={<AdminRoute />}>
+              <Route element={<Layout />}>
+                <Route index element={<Navigate to="/home" replace />} />
+                <Route path="/home"          element={<Home />} />
+                <Route path="/org-setup"     element={<OrgSetup />} />
+                <Route path="/users"         element={<UserManagement />} />
+                <Route path="/billing"       element={<Billing />} />
+                <Route path="/services"      element={<ServiceCatalog />} />
+                <Route path="/memberships"   element={<Memberships />} />
+                <Route path="/notifications" element={<NotificationSettings />} />
+                <Route path="/activity"      element={<ActivityLog />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/home" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/home" replace />} />
+          </Routes>
+        </LayoutThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   )
