@@ -2,27 +2,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 
-// Simple toggle switch component
-function Toggle({ enabled, onChange }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!enabled)}
-      className={`relative w-10 h-6 rounded-full transition-colors focus:outline-none ${enabled ? 'bg-amber-500' : 'bg-gray-700'}`}
-    >
-      <span
-        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-1'}`}
-      />
-    </button>
-  )
-}
-
 export default function Billing() {
   const { profile, org } = useAuth()
-
-  // Add-on UI toggles — not persisted yet
-  const [portalAddon,  setPortalAddon]  = useState(false)
-  const [bookingAddon, setBookingAddon] = useState(false)
 
   const [staffCount, setStaffCount] = useState(0)
   const [loading,    setLoading]    = useState(true)
@@ -149,7 +130,7 @@ export default function Billing() {
       {/* Page header */}
       <div className="mb-8">
         <h1 className="text-xl font-semibold text-white">Billing</h1>
-        <p className="text-sm text-gray-500 mt-1">View your plan, add-ons, and staff user counts.</p>
+        <p className="text-sm text-gray-500 mt-1">View your plan and manage your subscription.</p>
       </div>
 
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
@@ -240,28 +221,6 @@ export default function Billing() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Add-ons card */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-5">
-        <h2 className="text-sm font-semibold text-white mb-4">Add-ons</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-white font-medium">Client Portal</p>
-              <p className="text-xs text-gray-500 mt-0.5">+$125/mo · Self-serve booking and intake forms</p>
-            </div>
-            <Toggle enabled={portalAddon} onChange={setPortalAddon} />
-          </div>
-          <div className="border-t border-gray-800/60 pt-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-white font-medium">Booking App + Embeddable Widget</p>
-              <p className="text-xs text-gray-500 mt-0.5">+$125/mo · Online scheduling widget for your website</p>
-            </div>
-            <Toggle enabled={bookingAddon} onChange={setBookingAddon} />
-          </div>
-        </div>
-        <p className="mt-4 text-xs text-gray-600">Changes take effect at the start of the next billing cycle.</p>
       </div>
 
       {/* Staff users card */}
