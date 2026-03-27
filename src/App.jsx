@@ -12,6 +12,7 @@ import ServiceCatalog from './pages/ServiceCatalog'
 import NotificationSettings from './pages/NotificationSettings'
 import ActivityLog from './pages/ActivityLog'
 import Memberships from './pages/Memberships'
+import Onboarding from './pages/Onboarding'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <LayoutThemeProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/onboarding" element={<Onboarding />} />
 
             <Route element={<AdminRoute />}>
               <Route element={<Layout />}>
